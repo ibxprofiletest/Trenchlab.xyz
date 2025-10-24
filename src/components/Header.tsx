@@ -1,7 +1,8 @@
 import { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { Moon, Sun, Menu, X } from 'lucide-react';
-import { CONTRACT_ADDRESS, AI_MODELS } from '../data/mockData';
+import { CONTRACT_ADDRESS } from '../data/mockData';
+import { AI_MODELS } from '../types';
 import { useLiveData } from '../hooks/useLiveData';
 
 export default function Header() {

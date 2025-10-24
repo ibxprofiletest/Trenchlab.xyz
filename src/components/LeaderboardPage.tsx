@@ -1,5 +1,5 @@
 import Header from './Header';
-import { AI_MODELS } from '../data/mockData';
+import { AI_MODELS } from '../types';
 import { useLiveData } from '../hooks/useLiveData';
 
 export default function LeaderboardPage() {

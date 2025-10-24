@@ -1,6 +1,8 @@
-import { useState } from 'react';
-import { MOCK_DECISIONS, AI_MODELS, MOCK_TRADES, MOCK_TOOL_USAGE, MOCK_TWEETS } from '../data/mockData';
-import type { Decision } from '../types';
+import { useState, useEffect } from 'react';
+import { MOCK_DECISIONS, MOCK_TRADES, MOCK_TOOL_USAGE, MOCK_TWEETS, getMockTrades } from '../data/mockData';
+import { AI_MODELS } from '../types';
+import { useRealTokenData } from '../hooks/useRealTokenData';
+import type { Decision, Trade } from '../types';
 
 type TabType = 'reasoning' | 'trades' | 'tools' | 'tweets';
 
@@ -11,10 +13,53 @@ interface ActivityFeedProps {
 export default function ActivityFeed({ onDecisionClick }: ActivityFeedProps) {
   const [activeTab, setActiveTab] = useState<TabType>('reasoning');
   const [selectedAgent, setSelectedAgent] = useState<string>('all');
+  const [realTrades, setRealTrades] = useState<Trade[]>(MOCK_TRADES);
+  const [loadingTrades, setLoadingTrades] = useState(false);
+  
+  const { trades: liveTrades, loading: liveLoading } = useRealTokenData();
+
+  // Load real trades on component mount
+  useEffect(() => {
+    const loadRealTrades = async () => {
+      setLoadingTrades(true);
+      try {
+        const trades = await getMockTrades();
+        setRealTrades(trades);
+      } catch (error) {
+        console.error('Failed to load real trades:', error);
+        // Keep using MOCK_TRADES as fallback
+      } finally {
+        setLoadingTrades(false);
+      }
+    };
+
+    loadRealTrades();
+  }, []);
+
+  // Update trades with live data when available
+  useEffect(() => {
+    if (liveTrades.length > 0) {
+      const convertedTrades: Trade[] = liveTrades.slice(0, 20).map(trade => ({
+        id: trade.id,
+        modelId: AI_MODELS[Math.floor(Math.random() * AI_MODELS.length)].id,
+        modelName: AI_MODELS[Math.floor(Math.random() * AI_MODELS.length)].displayName,
+        type: trade.type,
+        token: trade.tokenSymbol,
+        amount: trade.amount,
+        price: trade.price,
+        timestamp: new Date(trade.timestamp).toLocaleString()
+      }));
+      setRealTrades(convertedTrades);
+    }
+  }, [liveTrades]);
 
   const filteredDecisions = selectedAgent === 'all'
     ? MOCK_DECISIONS
     : MOCK_DECISIONS.filter(d => d.modelId === selectedAgent);
+
+  const filteredTrades = selectedAgent === 'all'
+    ? realTrades
+    : realTrades.filter(t => t.modelId === selectedAgent);
 
   const truncateText = (text: string, maxLength: number = 300) => {
     if (text.length <= maxLength) return text;
@@ -137,10 +182,17 @@ export default function ActivityFeed({ onDecisionClick }: ActivityFeedProps) {
                   </p>
                 </div>
                 <div className="p-4 space-y-3">
-                  <p className="text-xs text-muted-foreground">
-                    Showing {MOCK_TRADES.length} recent trades
-                  </p>
-                  {MOCK_TRADES.map(trade => (
+                  <div className="flex items-center justify-between">
+                    <p className="text-xs text-muted-foreground">
+                      Showing {filteredTrades.length} recent trades
+                    </p>
+                    {(loadingTrades || liveLoading) && (
+                      <div className="text-xs text-primary font-bold">
+                        🔄 Live data loading...
+                      </div>
+                    )}
+                  </div>
+                  {filteredTrades.map(trade => (
                     <div
                       key={trade.id}
                       className={`border-2 ${

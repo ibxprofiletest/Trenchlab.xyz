@@ -4,6 +4,7 @@ import TradingChart from './TradingChart';
 import ModelCards from './ModelCards';
 import ActivityFeed from './ActivityFeed';
 import DecisionModal from './DecisionModal';
+import TokenInfo from './TokenInfo';
 import { useLiveData } from '../hooks/useLiveData';
 import type { Decision } from '../types';
 
@@ -42,9 +43,17 @@ export default function LivePage() {
           <ModelCards />
         </div>
 
-        {/* Activity Feed Sidebar - Hidden on mobile, visible on desktop */}
-        <div className="hidden lg:block w-96 flex-shrink-0">
-          <ActivityFeed onDecisionClick={setSelectedDecision} />
+        {/* Sidebar - Hidden on mobile, visible on desktop */}
+        <div className="hidden lg:flex w-96 flex-shrink-0 flex-col">
+          {/* Token Info Section */}
+          <div className="flex-shrink-0 border-b-2 border-border">
+            <TokenInfo />
+          </div>
+          
+          {/* Activity Feed Section */}
+          <div className="flex-1 min-h-0">
+            <ActivityFeed onDecisionClick={setSelectedDecision} />
+          </div>
         </div>
       </div>
 

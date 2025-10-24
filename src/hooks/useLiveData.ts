@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
-import { AI_MODELS, generateChartData } from '../data/mockData';
+import { AI_MODELS } from '../types';
+import { generateChartData } from '../data/mockData';
 import type { AIModel, ChartDataPoint } from '../types';
 
 export const useLiveData = () => {
