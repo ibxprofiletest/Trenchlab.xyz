@@ -45,7 +45,7 @@ export default function Header() {
               to="/"
               className="text-xl md:text-2xl font-bold text-primary hover:underline"
             >
-              Trenchmark.ai
+              Trenchlab.xyz
             </Link>
           </div>
 
