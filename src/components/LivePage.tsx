@@ -4,10 +4,12 @@ import TradingChart from './TradingChart';
 import ModelCards from './ModelCards';
 import ActivityFeed from './ActivityFeed';
 import DecisionModal from './DecisionModal';
+import { useLiveData } from '../hooks/useLiveData';
 import type { Decision } from '../types';
 
 export default function LivePage() {
   const [selectedDecision, setSelectedDecision] = useState<Decision | null>(null);
+  const { isLive } = useLiveData();
 
   return (
     <div className="min-h-screen flex flex-col bg-background">
@@ -22,8 +24,11 @@ export default function LivePage() {
               {/* Chart Stats Header */}
               <div className="bg-background border-4 border-border px-6 py-4">
                 <div className="flex items-center justify-center">
-                  <div className="text-sm text-muted-foreground">
-                    Loading...
+                  <div className="flex items-center gap-2">
+                    <div className={`w-2 h-2 rounded-full ${isLive ? 'bg-green-500 animate-pulse' : 'bg-gray-400'}`} />
+                    <div className="text-sm text-muted-foreground">
+                      {isLive ? 'LIVE TRADING DATA' : 'PAUSED'}
+                    </div>
                   </div>
                 </div>
               </div>

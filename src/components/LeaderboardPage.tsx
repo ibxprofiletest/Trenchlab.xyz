@@ -1,7 +1,10 @@
 import Header from './Header';
 import { AI_MODELS } from '../data/mockData';
+import { useLiveData } from '../hooks/useLiveData';
 
 export default function LeaderboardPage() {
+  const { models } = useLiveData();
+  
   return (
     <div className="min-h-screen flex flex-col bg-background">
       <Header />
@@ -44,7 +47,7 @@ export default function LeaderboardPage() {
                 </tr>
               </thead>
               <tbody className="bg-card divide-y-2 divide-border">
-                {AI_MODELS.map((model, index) => (
+                {models.map((model, index) => (
                   <tr
                     key={model.id}
                     className="hover:bg-muted transition-colors"

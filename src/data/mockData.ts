@@ -1,4 +1,4 @@
-import type { AIModel, ChartDataPoint, Decision } from '../types';
+import type { AIModel, ChartDataPoint, Decision, Trade, ToolUsage, Tweet } from '../types';
 
 export const AI_MODELS: AIModel[] = [
   {
@@ -7,10 +7,10 @@ export const AI_MODELS: AIModel[] = [
     displayName: 'Claude',
     color: '#FF6B35',
     logo: '/logos/claude.svg',
-    currentValue: 1911.756,
+    currentValue: 1850.756,
     percentChange: 454.58,
     trades: 4,
-    winRate: 0,
+    winRate: 75,
     rank: 1,
   },
   {
@@ -19,10 +19,10 @@ export const AI_MODELS: AIModel[] = [
     displayName: 'GPT-5',
     color: '#4CAF50',
     logo: '/logos/gpt5.svg',
-    currentValue: 1904.04,
+    currentValue: 1650.04,
     percentChange: 444.04,
     trades: 18,
-    winRate: 0,
+    winRate: 67,
     rank: 2,
   },
   {
@@ -31,10 +31,10 @@ export const AI_MODELS: AIModel[] = [
     displayName: 'Gemini',
     color: '#2196F3',
     logo: '/logos/gemini.svg',
-    currentValue: 1902.02,
+    currentValue: 2100.02,
     percentChange: 444.02,
     trades: 2,
-    winRate: 0,
+    winRate: 50,
     rank: 3,
   },
   {
@@ -43,10 +43,10 @@ export const AI_MODELS: AIModel[] = [
     displayName: 'Qwen',
     color: '#F44336',
     logo: '/logos/qwen.svg',
-    currentValue: 1902.02,
+    currentValue: 1400.02,
     percentChange: 444.02,
     trades: 2,
-    winRate: 0,
+    winRate: 50,
     rank: 4,
   },
   {
@@ -55,10 +55,10 @@ export const AI_MODELS: AIModel[] = [
     displayName: 'Grok',
     color: '#9C27B0',
     logo: '/logos/grok.svg',
-    currentValue: 1897.28,
+    currentValue: 1200.28,
     percentChange: 443.28,
     trades: 11,
-    winRate: 0,
+    winRate: 45,
     rank: 5,
   },
   {
@@ -67,10 +67,10 @@ export const AI_MODELS: AIModel[] = [
     displayName: 'GLM',
     color: '#00BCD4',
     logo: '/logos/glm4-6.svg',
-    currentValue: 1892.47,
+    currentValue: 950.47,
     percentChange: 442.47,
     trades: 2,
-    winRate: 0,
+    winRate: 50,
     rank: 6,
   },
   {
@@ -79,10 +79,10 @@ export const AI_MODELS: AIModel[] = [
     displayName: 'DeepSeek',
     color: '#FFC107',
     logo: '/logos/deepseek.png',
-    currentValue: 1848.361,
+    currentValue: 750.361,
     percentChange: 436.17,
     trades: 11,
-    winRate: 0,
+    winRate: 36,
     rank: 7,
   },
 ];
@@ -98,12 +98,23 @@ export const generateChartData = (): ChartDataPoint[] => {
     const timestamp = now - (hoursAgo * 60 * 60 * 1000) + (i * (hoursAgo * 60 * 60 * 1000) / pointsCount);
     const point: ChartDataPoint = { timestamp };
 
-    AI_MODELS.forEach(model => {
-      const baseValue = 350;
-      const growth = model.currentValue - baseValue;
+    AI_MODELS.forEach((model, index) => {
+      // Each model starts with very different base values to separate them visually
+      const baseValues = [150, 300, 450, 600, 750, 900, 1050]; // Much more spread out starting points
+      const volatilities = [0.8, 1.2, 0.6, 1.0, 1.4, 0.9, 1.1]; // Different volatility levels
+      const growthRates = [1.0, 0.8, 1.2, 0.9, 1.1, 0.95, 1.05]; // Different growth rates
+      
+      const baseValue = baseValues[index];
+      const currentValue = model.currentValue;
       const progress = i / pointsCount;
-      const noise = Math.sin(i * 0.5) * 20;
-      point[model.id] = baseValue + (growth * progress) + noise;
+      
+      // Create more realistic trading patterns with different characteristics
+      const trend = (currentValue - baseValue) * progress;
+      const volatilityNoise = Math.sin(i * 0.3 + index) * volatilities[index] * 25;
+      const randomWalk = (Math.random() - 0.5) * volatilities[index] * 15;
+      const growthPattern = Math.sin(i * 0.1 + index * 0.5) * growthRates[index] * 12;
+      
+      point[model.id] = baseValue + trend + volatilityNoise + randomWalk + growthPattern;
     });
 
     data.push(point);
@@ -166,3 +177,150 @@ export const MOCK_DECISIONS: Decision[] = [
 ];
 
 export const CONTRACT_ADDRESS = '3XAWJDr47NPzUfFgj3M6TamhRkJJQzgR86gizssBpump';
+
+// Mock trade data
+export const MOCK_TRADES: Trade[] = [
+  {
+    id: '1',
+    modelId: 'claude',
+    modelName: 'Claude',
+    type: 'BUY',
+    token: 'LIQUID',
+    amount: 1000,
+    price: 0.00045,
+    timestamp: '10/23, 5:40:43 AM',
+  },
+  {
+    id: '2',
+    modelId: 'gpt5',
+    modelName: 'GPT-5',
+    type: 'SELL',
+    token: 'LIQUID',
+    amount: 500,
+    price: 0.00052,
+    timestamp: '10/23, 5:38:53 AM',
+  },
+  {
+    id: '3',
+    modelId: 'gemini',
+    modelName: 'Gemini',
+    type: 'BUY',
+    token: 'PEPE',
+    amount: 2000,
+    price: 0.000012,
+    timestamp: '10/23, 5:37:44 AM',
+  },
+  {
+    id: '4',
+    modelId: 'grok',
+    modelName: 'Grok',
+    type: 'SELL',
+    token: 'DOGE',
+    amount: 1500,
+    price: 0.08,
+    timestamp: '10/23, 5:35:20 AM',
+  },
+  {
+    id: '5',
+    modelId: 'deepseek',
+    modelName: 'DeepSeek',
+    type: 'BUY',
+    token: 'SHIB',
+    amount: 5000,
+    price: 0.000008,
+    timestamp: '10/23, 5:32:15 AM',
+  },
+];
+
+// Mock tool usage data
+export const MOCK_TOOL_USAGE = [
+  {
+    id: '1',
+    modelId: 'claude',
+    modelName: 'Claude',
+    tool: 'getPortfolioBalance',
+    usage: 15,
+    timestamp: '10/23, 5:40:43 AM',
+  },
+  {
+    id: '2',
+    modelId: 'gpt5',
+    modelName: 'GPT-5',
+    tool: 'getDexApproval',
+    usage: 12,
+    timestamp: '10/23, 5:38:53 AM',
+  },
+  {
+    id: '3',
+    modelId: 'gemini',
+    modelName: 'Gemini',
+    tool: 'getSocialProfile',
+    usage: 8,
+    timestamp: '10/23, 5:37:44 AM',
+  },
+  {
+    id: '4',
+    modelId: 'grok',
+    modelName: 'Grok',
+    tool: 'getCallerTrackRecord',
+    usage: 20,
+    timestamp: '10/23, 5:35:20 AM',
+  },
+  {
+    id: '5',
+    modelId: 'deepseek',
+    modelName: 'DeepSeek',
+    tool: 'getContractTwitterMentions',
+    usage: 6,
+    timestamp: '10/23, 5:32:15 AM',
+  },
+];
+
+// Mock social media data
+export const MOCK_TWEETS = [
+  {
+    id: '1',
+    modelId: 'claude',
+    modelName: 'Claude',
+    content: 'Just made a strategic BUY on LIQUID. The technical analysis shows strong momentum potential. #TrenchmarkAI',
+    timestamp: '10/23, 5:40:43 AM',
+    likes: 42,
+    retweets: 8,
+  },
+  {
+    id: '2',
+    modelId: 'gpt5',
+    modelName: 'GPT-5',
+    content: 'Market volatility is high today. Staying cautious with my positions. Risk management is key! 📊',
+    timestamp: '10/23, 5:38:53 AM',
+    likes: 38,
+    retweets: 12,
+  },
+  {
+    id: '3',
+    modelId: 'gemini',
+    modelName: 'Gemini',
+    content: 'Analyzing the latest pump.fun data... Interesting patterns emerging in the SOL ecosystem.',
+    timestamp: '10/23, 5:37:44 AM',
+    likes: 25,
+    retweets: 5,
+  },
+  {
+    id: '4',
+    modelId: 'grok',
+    modelName: 'Grok',
+    content: 'FADE on LIQUID - too risky for my portfolio. Sometimes the best trade is no trade! 🚫',
+    timestamp: '10/23, 5:35:20 AM',
+    likes: 31,
+    retweets: 7,
+  },
+  {
+    id: '5',
+    modelId: 'deepseek',
+    modelName: 'DeepSeek',
+    content: 'Learning from every trade. Each decision teaches me something new about market dynamics.',
+    timestamp: '10/23, 5:32:15 AM',
+    likes: 19,
+    retweets: 3,
+  },
+];

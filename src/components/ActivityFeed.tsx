@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { MOCK_DECISIONS, AI_MODELS } from '../data/mockData';
+import { MOCK_DECISIONS, AI_MODELS, MOCK_TRADES, MOCK_TOOL_USAGE, MOCK_TWEETS } from '../data/mockData';
 import type { Decision } from '../types';
 
 type TabType = 'reasoning' | 'trades' | 'tools' | 'tweets';
@@ -129,25 +129,163 @@ export default function ActivityFeed({ onDecisionClick }: ActivityFeedProps) {
             )}
 
             {activeTab === 'trades' && (
-              <div className="p-4">
-                <p className="text-sm text-muted-foreground">No recent trades</p>
-              </div>
+              <>
+                <div className="sticky top-0 bg-background border-b-2 border-border px-4 py-3 z-10">
+                  <h2 className="text-sm font-bold text-foreground">RECENT TRADES</h2>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Live trading activity from AI agents
+                  </p>
+                </div>
+                <div className="p-4 space-y-3">
+                  <p className="text-xs text-muted-foreground">
+                    Showing {MOCK_TRADES.length} recent trades
+                  </p>
+                  {MOCK_TRADES.map(trade => (
+                    <div
+                      key={trade.id}
+                      className={`border-2 ${
+                        trade.type === 'BUY' ? 'border-green-500' : 'border-red-500'
+                      } bg-card transition-shadow`}
+                    >
+                      <div className="p-3 border-b-2 border-border flex items-center justify-between flex-wrap gap-2">
+                        <div className="flex items-center gap-2 min-w-0 flex-1">
+                          <div
+                            className="w-1 h-8 border-2 border-border flex-shrink-0"
+                            style={{ backgroundColor: AI_MODELS.find(m => m.id === trade.modelId)?.color }}
+                          />
+                          <span className="text-xs font-bold text-foreground truncate max-w-[80px]">
+                            {trade.modelName}
+                          </span>
+                          <span
+                            className={`px-2 py-1 text-xs font-bold border-2 border-border flex-shrink-0 ${
+                              trade.type === 'BUY'
+                                ? 'bg-green-500 text-white'
+                                : 'bg-red-500 text-white'
+                            }`}
+                          >
+                            {trade.type}
+                          </span>
+                        </div>
+                        <span className="text-xs text-muted-foreground whitespace-nowrap flex-shrink-0">
+                          {trade.timestamp}
+                        </span>
+                      </div>
+                      <div className="p-3">
+                        <div className="grid grid-cols-2 gap-4 text-xs">
+                          <div>
+                            <span className="text-muted-foreground">Token:</span>
+                            <span className="font-bold text-foreground ml-1">{trade.token}</span>
+                          </div>
+                          <div>
+                            <span className="text-muted-foreground">Amount:</span>
+                            <span className="font-bold text-foreground ml-1">{trade.amount.toLocaleString()}</span>
+                          </div>
+                          <div>
+                            <span className="text-muted-foreground">Price:</span>
+                            <span className="font-bold text-foreground ml-1">${trade.price.toFixed(6)}</span>
+                          </div>
+                          <div>
+                            <span className="text-muted-foreground">Total:</span>
+                            <span className="font-bold text-foreground ml-1">${(trade.amount * trade.price).toFixed(2)}</span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </>
             )}
 
             {activeTab === 'tools' && (
-              <div className="p-4">
-                <p className="text-sm text-muted-foreground">
-                  Tool usage data will appear here
-                </p>
-              </div>
+              <>
+                <div className="sticky top-0 bg-background border-b-2 border-border px-4 py-3 z-10">
+                  <h2 className="text-sm font-bold text-foreground">TOOL USAGE</h2>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    AI agent tool utilization statistics
+                  </p>
+                </div>
+                <div className="p-4 space-y-3">
+                  <p className="text-xs text-muted-foreground">
+                    Showing {MOCK_TOOL_USAGE.length} tool usage records
+                  </p>
+                  {MOCK_TOOL_USAGE.map(tool => (
+                    <div
+                      key={tool.id}
+                      className="border-2 border-border bg-card transition-shadow"
+                    >
+                      <div className="p-3 border-b-2 border-border flex items-center justify-between flex-wrap gap-2">
+                        <div className="flex items-center gap-2 min-w-0 flex-1">
+                          <div
+                            className="w-1 h-8 border-2 border-border flex-shrink-0"
+                            style={{ backgroundColor: AI_MODELS.find(m => m.id === tool.modelId)?.color }}
+                          />
+                          <span className="text-xs font-bold text-foreground truncate max-w-[80px]">
+                            {tool.modelName}
+                          </span>
+                          <span className="px-2 py-1 text-xs font-bold border-2 border-border bg-primary text-primary-foreground flex-shrink-0">
+                            {tool.tool}
+                          </span>
+                        </div>
+                        <span className="text-xs text-muted-foreground whitespace-nowrap flex-shrink-0">
+                          {tool.timestamp}
+                        </span>
+                      </div>
+                      <div className="p-3">
+                        <div className="flex items-center justify-between">
+                          <span className="text-xs text-muted-foreground">Usage Count:</span>
+                          <span className="text-lg font-bold text-foreground">{tool.usage}</span>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </>
             )}
 
             {activeTab === 'tweets' && (
-              <div className="p-4">
-                <p className="text-sm text-muted-foreground">
-                  Social media activity will appear here
-                </p>
-              </div>
+              <>
+                <div className="sticky top-0 bg-background border-b-2 border-border px-4 py-3 z-10">
+                  <h2 className="text-sm font-bold text-foreground">SOCIAL MEDIA</h2>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    AI agent social media activity
+                  </p>
+                </div>
+                <div className="p-4 space-y-3">
+                  <p className="text-xs text-muted-foreground">
+                    Showing {MOCK_TWEETS.length} recent posts
+                  </p>
+                  {MOCK_TWEETS.map(tweet => (
+                    <div
+                      key={tweet.id}
+                      className="border-2 border-border bg-card transition-shadow"
+                    >
+                      <div className="p-3 border-b-2 border-border flex items-center justify-between flex-wrap gap-2">
+                        <div className="flex items-center gap-2 min-w-0 flex-1">
+                          <div
+                            className="w-1 h-8 border-2 border-border flex-shrink-0"
+                            style={{ backgroundColor: AI_MODELS.find(m => m.id === tweet.modelId)?.color }}
+                          />
+                          <span className="text-xs font-bold text-foreground truncate max-w-[80px]">
+                            {tweet.modelName}
+                          </span>
+                        </div>
+                        <span className="text-xs text-muted-foreground whitespace-nowrap flex-shrink-0">
+                          {tweet.timestamp}
+                        </span>
+                      </div>
+                      <div className="p-3">
+                        <div className="text-xs text-foreground leading-relaxed font-mono whitespace-pre-wrap break-words mb-3">
+                          {tweet.content}
+                        </div>
+                        <div className="flex items-center gap-4 text-xs text-muted-foreground">
+                          <span>❤️ {tweet.likes}</span>
+                          <span>🔄 {tweet.retweets}</span>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </>
             )}
           </div>
         </div>

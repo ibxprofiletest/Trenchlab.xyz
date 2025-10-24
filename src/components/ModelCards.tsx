@@ -1,8 +1,10 @@
 import { AI_MODELS } from '../data/mockData';
+import { useLiveData } from '../hooks/useLiveData';
 
 export default function ModelCards() {
-  const highest = AI_MODELS[0];
-  const lowest = AI_MODELS[AI_MODELS.length - 1];
+  const { models } = useLiveData();
+  const highest = models[0];
+  const lowest = models[models.length - 1];
 
   const formatValue = (value: number) => {
     if (value >= 1000) {
@@ -51,7 +53,7 @@ export default function ModelCards() {
 
       {/* Model Cards Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-7 divide-y sm:divide-y-0 sm:divide-x-2 divide-border">
-        {AI_MODELS.map((model, index) => (
+        {models.map((model, index) => (
           <div
             key={model.id}
             className="p-4 hover:bg-muted transition-colors border-b-2 md:border-b-0 border-border"

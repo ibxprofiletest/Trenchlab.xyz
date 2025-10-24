@@ -1,7 +1,12 @@
 import Header from './Header';
 import { AI_MODELS } from '../data/mockData';
+import { useLiveData } from '../hooks/useLiveData';
+import { useTeamMembership } from '../hooks/useTeamMembership';
 
 export default function TeamsPage() {
+  const { models } = useLiveData();
+  const { joinedTeam, joinTeam, leaveTeam } = useTeamMembership();
+  
   return (
     <div className="min-h-screen flex flex-col bg-background">
       <Header />
@@ -33,7 +38,7 @@ export default function TeamsPage() {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {AI_MODELS.map((model) => (
+          {models.map((model) => (
             <div
               key={model.id}
               className="border-4 border-border bg-card hover:shadow-lg transition-shadow"
@@ -92,15 +97,30 @@ export default function TeamsPage() {
                   </div>
                 </div>
 
-                <button
-                  className="w-full px-6 py-3 text-sm font-bold border-4 border-border bg-primary text-primary-foreground hover:bg-primary/90 transition-colors"
-                  style={{
-                    backgroundColor: model.color,
-                    borderColor: model.color,
-                  }}
-                >
-                  JOIN TEAM {model.displayName.toUpperCase()}
-                </button>
+                {joinedTeam === model.id ? (
+                  <div className="space-y-2">
+                    <div className="w-full px-6 py-3 text-sm font-bold border-4 border-border bg-green-500 text-white text-center">
+                      ✓ JOINED TEAM {model.displayName.toUpperCase()}
+                    </div>
+                    <button
+                      onClick={() => leaveTeam()}
+                      className="w-full px-6 py-2 text-xs font-bold border-2 border-red-500 bg-red-500 text-white hover:bg-red-600 transition-colors"
+                    >
+                      LEAVE TEAM
+                    </button>
+                  </div>
+                ) : (
+                  <button
+                    onClick={() => joinTeam(model.id)}
+                    className="w-full px-6 py-3 text-sm font-bold border-4 border-border bg-primary text-primary-foreground hover:bg-primary/90 transition-colors"
+                    style={{
+                      backgroundColor: model.color,
+                      borderColor: model.color,
+                    }}
+                  >
+                    JOIN TEAM {model.displayName.toUpperCase()}
+                  </button>
+                )}
               </div>
             </div>
           ))}

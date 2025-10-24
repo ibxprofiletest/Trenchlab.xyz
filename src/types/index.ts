@@ -38,3 +38,22 @@ export interface AIModel {
     timestamp: string;
   }
   
+  export interface ToolUsage {
+    id: string;
+    modelId: string;
+    modelName: string;
+    tool: string;
+    usage: number;
+    timestamp: string;
+  }
+  
+  export interface Tweet {
+    id: string;
+    modelId: string;
+    modelName: string;
+    content: string;
+    timestamp: string;
+    likes: number;
+    retweets: number;
+  }
+  

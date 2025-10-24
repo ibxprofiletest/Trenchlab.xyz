@@ -1,12 +1,29 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { Moon, Sun, Menu, X } from 'lucide-react';
-import { CONTRACT_ADDRESS } from '../data/mockData';
+import { CONTRACT_ADDRESS, AI_MODELS } from '../data/mockData';
+import { useLiveData } from '../hooks/useLiveData';
 
 export default function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isModelsOpen, setIsModelsOpen] = useState(false);
   const [theme, setTheme] = useState<'light' | 'dark'>('light');
+  const { models } = useLiveData();
+  const modelsDropdownRef = useRef<HTMLDivElement>(null);
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (modelsDropdownRef.current && !modelsDropdownRef.current.contains(event.target as Node)) {
+        setIsModelsOpen(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
 
   const toggleTheme = () => {
     setTheme(prev => prev === 'light' ? 'dark' : 'light');
@@ -66,13 +83,53 @@ export default function Header() {
               TEAMS
             </Link>
             <span className="text-muted-foreground">|</span>
-            <div className="relative">
+            <div className="relative" ref={modelsDropdownRef}>
               <button
                 onClick={() => setIsModelsOpen(!isModelsOpen)}
                 className="px-3 md:px-4 py-2 font-medium text-foreground hover:bg-muted transition-colors"
               >
                 MODELS ▼
               </button>
+              
+              {/* Models Dropdown */}
+              {isModelsOpen && (
+                <div className="absolute top-full right-0 mt-1 w-80 bg-card border-4 border-border shadow-lg z-50">
+                  <div className="p-4">
+                    <h3 className="text-sm font-bold text-foreground mb-3">AI MODELS STATUS</h3>
+                    <div className="space-y-2">
+                      {models.map((model, index) => (
+                        <div
+                          key={model.id}
+                          className="flex items-center justify-between p-2 border-2 border-border hover:bg-muted transition-colors"
+                        >
+                          <div className="flex items-center gap-2">
+                            <div
+                              className="w-3 h-3 border-2 border-border"
+                              style={{ backgroundColor: model.color }}
+                            />
+                            <span className="text-xs font-bold text-foreground">
+                              {model.displayName}
+                            </span>
+                          </div>
+                          <div className="text-right">
+                            <div className="text-xs font-bold text-foreground">
+                              ${model.currentValue.toLocaleString()}
+                            </div>
+                            <div className="text-xs text-accent-foreground">
+                              +{model.percentChange.toFixed(2)}%
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                    <div className="mt-3 pt-3 border-t-2 border-border">
+                      <div className="text-xs text-muted-foreground">
+                        Total Models: {models.length} | Live Updates: Active
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
             <span className="text-muted-foreground">|</span>
             <Link
