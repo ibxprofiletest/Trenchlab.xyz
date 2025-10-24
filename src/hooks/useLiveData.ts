@@ -45,12 +45,23 @@ export const useLiveData = () => {
       const newPoint: ChartDataPoint = { timestamp: now };
       
       models.forEach((model, index) => {
-        const volatilities = [0.003, 0.005, 0.002, 0.004, 0.008, 0.0025, 0.0045];
+        const lastValue = prevData[prevData.length - 1]?.[model.id] || model.currentValue;
+        
+        // More realistic market movements
+        const volatilities = [0.002, 0.004, 0.001, 0.003, 0.006, 0.002, 0.003];
         const volatility = volatilities[index];
         
-        const lastValue = prevData[prevData.length - 1]?.[model.id] || model.currentValue;
-        const changePercent = (Math.random() - 0.5) * volatility;
-        newPoint[model.id] = lastValue * (1 + changePercent);
+        // Random walk with slight upward bias
+        const randomChange = (Math.random() - 0.4) * volatility; // Slight upward bias
+        const trendBias = 0.0001; // Small upward trend
+        
+        // Add some momentum (if last move was up, slightly more likely to continue)
+        const lastChange = prevData.length > 1 ? 
+          (lastValue - (prevData[prevData.length - 2]?.[model.id] || lastValue)) / lastValue : 0;
+        const momentum = lastChange * 0.1; // Small momentum effect
+        
+        const totalChange = randomChange + trendBias + momentum;
+        newPoint[model.id] = lastValue * (1 + totalChange);
       });
       
       newData.push(newPoint);

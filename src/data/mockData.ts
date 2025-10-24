@@ -99,22 +99,30 @@ export const generateChartData = (): ChartDataPoint[] => {
     const point: ChartDataPoint = { timestamp };
 
     AI_MODELS.forEach((model, index) => {
-      // Each model starts with very different base values to separate them visually
-      const baseValues = [150, 300, 450, 600, 750, 900, 1050]; // Much more spread out starting points
-      const volatilities = [0.8, 1.2, 0.6, 1.0, 1.4, 0.9, 1.1]; // Different volatility levels
-      const growthRates = [1.0, 0.8, 1.2, 0.9, 1.1, 0.95, 1.05]; // Different growth rates
-      
+      // Each model starts with different base values
+      const baseValues = [150, 300, 450, 600, 750, 900, 1050];
       const baseValue = baseValues[index];
-      const currentValue = model.currentValue;
-      const progress = i / pointsCount;
       
-      // Create more realistic trading patterns with different characteristics
-      const trend = (currentValue - baseValue) * progress;
-      const volatilityNoise = Math.sin(i * 0.3 + index) * volatilities[index] * 25;
-      const randomWalk = (Math.random() - 0.5) * volatilities[index] * 15;
-      const growthPattern = Math.sin(i * 0.1 + index * 0.5) * growthRates[index] * 12;
+      // Create realistic market-like patterns
+      const timeProgress = i / pointsCount;
       
-      point[model.id] = baseValue + trend + volatilityNoise + randomWalk + growthPattern;
+      // Base trend with different slopes for each model
+      const trendSlopes = [0.8, 1.2, 0.6, 1.0, 1.4, 0.9, 1.1];
+      const trend = baseValue + (timeProgress * trendSlopes[index] * 200);
+      
+      // Add realistic market noise (random walk)
+      const noise = (Math.random() - 0.5) * 30;
+      
+      // Add some cyclical patterns (market cycles)
+      const cycle1 = Math.sin(timeProgress * Math.PI * 2) * 20;
+      const cycle2 = Math.sin(timeProgress * Math.PI * 4 + index) * 10;
+      
+      // Add occasional spikes/dips (market events)
+      const spikeChance = Math.random();
+      const spike = spikeChance > 0.95 ? (Math.random() - 0.5) * 100 : 0;
+      
+      // Combine all factors
+      point[model.id] = trend + noise + cycle1 + cycle2 + spike;
     });
 
     data.push(point);
