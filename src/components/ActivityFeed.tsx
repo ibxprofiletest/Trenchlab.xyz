@@ -186,11 +186,6 @@ export default function ActivityFeed({ onDecisionClick }: ActivityFeedProps) {
                     <p className="text-xs text-muted-foreground">
                       Showing {filteredTrades.length} recent trades
                     </p>
-                    {(loadingTrades || liveLoading) && (
-                      <div className="text-xs text-primary font-bold">
-                        🔄 Live data loading...
-                      </div>
-                    )}
                   </div>
                   {filteredTrades.map(trade => (
                     <div

@@ -9,6 +9,8 @@ import {
   getRecentTokens,
   POPULAR_SOLANA_TOKENS 
 } from '../services/solanaApi';
+import { MOCK_TRADES } from '../data/mockData';
+import type { Trade } from '../types';
 
 interface UseRealTokenDataReturn {
   tokens: SolanaToken[];
@@ -24,12 +26,12 @@ export const useRealTokenData = (): UseRealTokenDataReturn => {
   const [tokens, setTokens] = useState<SolanaToken[]>([]);
   const [trades, setTrades] = useState<SolanaTrade[]>([]);
   const [trendingTokens, setTrendingTokens] = useState<SolanaToken[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false); // Start with false - show data immediately
   const [error, setError] = useState<string | null>(null);
 
   const refreshData = useCallback(async () => {
     try {
-      setLoading(true);
+      // Don't set loading to true - keep showing existing data
       setError(null);
 
       // Fetch the known tokens from our list (USDC, SOL, BONK, WIF, PEPE, etc.)
@@ -48,8 +50,7 @@ export const useRealTokenData = (): UseRealTokenDataReturn => {
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to fetch token data');
       console.error('Error fetching real token data:', err);
-    } finally {
-      setLoading(false);
+      // Keep showing existing data even on error
     }
   }, []);
 
@@ -57,8 +58,9 @@ export const useRealTokenData = (): UseRealTokenDataReturn => {
     return tokens.find(token => token.address === address);
   }, [tokens]);
 
-  // Initial data fetch
+  // Initial data fetch - fetch immediately on mount
   useEffect(() => {
+    // Fetch data right away, but don't show loading state
     refreshData();
   }, [refreshData]);
 
