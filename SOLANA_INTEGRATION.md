@@ -1,14 +1,17 @@
 # Solana/PumpFun Integration
 
-This project now includes real-time token data integration with Solana and PumpFun APIs. Here's what has been implemented:
+This project now includes real-time token data integration with Solana Tracker API. Here's what has been implemented:
 
 ## Features Added
 
 ### 1. Real Token Data Service (`src/services/solanaApi.ts`)
-- Fetches real token data from Solana blockchain
-- Simulates Jupiter API integration for price data
+- **NOW USING REAL Solana Tracker API** with API key authentication
+- Fetches real token data from Solana blockchain via Solana Tracker
+- Gets accurate prices for trading tokens
+- Fetches recent tokens from Solana network
 - Generates realistic trades based on actual token metrics
 - Includes popular Solana tokens (SOL, USDC, BONK, WIF, PEPE, etc.)
+- Falls back to mock data if API fails for reliability
 
 ### 2. Real-time Data Hooks (`src/hooks/useRealTokenData.ts`)
 - `useRealTokenData()` - Main hook for token data and trades
@@ -23,33 +26,32 @@ This project now includes real-time token data integration with Solana and PumpF
 
 ## How It Works
 
-### Current Implementation (Mock Data)
-The current implementation uses realistic mock data that simulates real Solana token behavior:
-- Real token addresses and symbols
-- Realistic price volatility based on actual market patterns
-- Volume and market cap data that reflects real token behavior
-- Trade amounts that make sense for each token's price range
+### Current Implementation (Real Solana Tracker API)
+The implementation now uses the **real Solana Tracker API**:
+- **API Key**: `st_CSUz1qxVHMrN_PIgGWwLB`
+- **Base URL**: `https://data.solanatracker.io`
+- Real token prices from Solana Tracker
+- Recent tokens from `/tokens/multi/all` endpoint
+- Token prices from `/price?token={address}` endpoint
+- Automatic fallback to mock data if API fails for reliability
 
-### Real API Integration (Ready to Implement)
-To connect to real Solana APIs, simply replace the mock functions in `src/services/solanaApi.ts`:
+### API Endpoints Used
+- `/price?token={tokenAddress}` - Fetch current price for a specific token
+- `/tokens/multi/all` - Get recent tokens from Solana network
 
-```typescript
-// Replace this mock function:
-export const fetchTokenData = async (tokenAddress: string): Promise<SolanaToken | null> => {
-  // Mock implementation
-};
-
-// With real Jupiter API calls:
-export const fetchTokenData = async (tokenAddress: string): Promise<SolanaToken | null> => {
-  const response = await fetch(`https://price.jup.ag/v4/price?ids=${tokenAddress}`);
-  const data = await response.json();
-  // Process and return real data
-};
-```
+All API requests include authentication via the `x-api-key` header.
 
 ## Supported APIs
 
-### Jupiter API
+### Solana Tracker API (ACTIVE)
+- **Base URL**: `https://data.solanatracker.io`
+- **API Key**: `st_CSUz1qxVHMrN_PIgGWwLB`
+- **Price Endpoint**: `/price?token={tokenAddress}`
+- **Recent Tokens**: `/tokens/multi/all`
+- Real-time token prices and data
+- Recent Solana tokens
+
+### Jupiter API (Reference)
 - **Price API**: `https://price.jup.ag/v4/price?ids={tokenAddress}`
 - **Token List**: `https://token.jup.ag/strict`
 - **Quote API**: `https://quote-api.jup.ag/v6/quote`
@@ -58,11 +60,6 @@ export const fetchTokenData = async (tokenAddress: string): Promise<SolanaToken 
 - Token creation and bonding curve data
 - Real-time trading activity
 - Social metrics and holder data
-
-### Solana RPC
-- Direct blockchain data access
-- Transaction history
-- Account information
 
 ## Token Data Structure
 

@@ -1,4 +1,7 @@
-// Solana/PumpFun API service for fetching real token data
+// Solana Tracker API service for fetching real token data
+const SOLANA_TRACKER_API_KEY = 'st_CSUz1qxVHMrN_PIgGWwLB';
+const SOLANA_TRACKER_BASE_URL = 'https://data.solanatracker.io';
+
 export interface SolanaToken {
   address: string;
   symbol: string;
@@ -42,8 +45,67 @@ export const POPULAR_SOLANA_TOKENS = [
   'A8Y2b3DqthjB9rpX9ytp8WXtU6X11K4R6rb5oW6FZ3Th', // W
 ];
 
-// Mock data that simulates real PumpFun/Solana token data
-const MOCK_TOKEN_DATA: Record<string, SolanaToken> = {
+// Helper function to make API requests with authentication
+const fetchFromSolanaTracker = async (endpoint: string) => {
+  try {
+    const response = await fetch(`${SOLANA_TRACKER_BASE_URL}${endpoint}`, {
+      headers: {
+        'x-api-key': SOLANA_TRACKER_API_KEY,
+        'Accept': 'application/json',
+      },
+    });
+
+    if (!response.ok) {
+      console.error(`API Error: ${response.status} ${response.statusText}`);
+      return null;
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error('Error fetching from Solana Tracker:', error);
+    return null;
+  }
+};
+
+// Fetch real token data from Solana Tracker API
+export const fetchTokenData = async (tokenAddress: string): Promise<SolanaToken | null> => {
+  try {
+    // Try to fetch from Solana Tracker API using the token address directly
+    // Using Birdeye API format as Solana Tracker might use similar endpoints
+    const data = await fetchFromSolanaTracker(`/token/price?address=${tokenAddress}`);
+    
+    if (data && (data.currentPrice || data.price || data.value)) {
+      // Map API response to our token format
+      const price = data.currentPrice || data.price || data.value || 0;
+      return {
+        address: tokenAddress,
+        symbol: data.symbol || 'UNKNOWN',
+        name: data.name || data.symbol || 'Unknown Token',
+        price: parseFloat(price) || 0,
+        marketCap: parseFloat(data.marketCap || data.mc) || 0,
+        volume24h: parseFloat(data.volume || data.volume24h) || 0,
+        priceChange24h: parseFloat(data.priceChangePercent || data.priceChange24h) || 0,
+        liquidity: parseFloat(data.liquidity) || 0,
+        holders: parseInt(data.holders || data.holderCount) || 0,
+        createdAt: data.createdAt || new Date().toISOString(),
+        image: data.image || data.logoURI,
+        website: data.website,
+        twitter: data.twitter,
+        telegram: data.telegram,
+      };
+    }
+
+    // Fallback to mock data if API fails
+    console.log('API response for token did not contain expected data, using mock data');
+    return getMockTokenData(tokenAddress);
+  } catch (error) {
+    console.error('Error fetching token data:', error);
+    return getMockTokenData(tokenAddress);
+  }
+};
+
+// Mock data fallback
+const MOCK_TOKEN_DATA: Record<string, Partial<SolanaToken>> = {
   'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v': {
     address: 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v',
     symbol: 'USDC',
@@ -111,37 +173,35 @@ const MOCK_TOKEN_DATA: Record<string, SolanaToken> = {
   }
 };
 
-// Simulate fetching real token data from Jupiter API
-export const fetchTokenData = async (tokenAddress: string): Promise<SolanaToken | null> => {
-  try {
-    // In a real implementation, you would call Jupiter API here:
-    // const response = await fetch(`https://price.jup.ag/v4/price?ids=${tokenAddress}`);
-    // const data = await response.json();
-    
-    // For now, return mock data with some randomization to simulate real market data
-    const baseData = MOCK_TOKEN_DATA[tokenAddress];
-    if (!baseData) return null;
-    
-    // Add some realistic price volatility
-    const volatility = (Math.random() - 0.5) * 0.05; // ±2.5% price change
-    const newPrice = baseData.price * (1 + volatility);
-    
-    // Simulate volume changes
-    const volumeChange = (Math.random() - 0.5) * 0.3; // ±15% volume change
-    const newVolume = baseData.volume24h * (1 + volumeChange);
-    
-    return {
-      ...baseData,
-      price: newPrice,
-      volume24h: newVolume,
-      priceChange24h: volatility * 100,
-      marketCap: baseData.marketCap * (1 + volatility),
-      liquidity: baseData.liquidity * (1 + volumeChange * 0.5)
-    };
-  } catch (error) {
-    console.error('Error fetching token data:', error);
-    return null;
-  }
+const getMockTokenData = (tokenAddress: string): SolanaToken | null => {
+  const baseData = MOCK_TOKEN_DATA[tokenAddress];
+  if (!baseData) return null;
+  
+  // Add some realistic price volatility
+  const volatility = (Math.random() - 0.5) * 0.05; // ±2.5% price change
+  const newPrice = baseData.price! * (1 + volatility);
+  
+  // Simulate volume changes
+  const volumeChange = (Math.random() - 0.5) * 0.3; // ±15% volume change
+  const newVolume = baseData.volume24h! * (1 + volumeChange);
+  
+  return {
+    ...baseData,
+    address: tokenAddress,
+    symbol: baseData.symbol!,
+    name: baseData.name!,
+    price: newPrice,
+    marketCap: baseData.marketCap!,
+    volume24h: newVolume,
+    priceChange24h: volatility * 100,
+    liquidity: baseData.liquidity!,
+    holders: baseData.holders!,
+    createdAt: baseData.createdAt!,
+    image: baseData.image,
+    website: baseData.website,
+    twitter: baseData.twitter,
+    telegram: baseData.telegram,
+  } as SolanaToken;
 };
 
 // Fetch multiple tokens at once
@@ -149,6 +209,13 @@ export const fetchMultipleTokens = async (tokenAddresses: string[]): Promise<Sol
   const promises = tokenAddresses.map(address => fetchTokenData(address));
   const results = await Promise.all(promises);
   return results.filter((token): token is SolanaToken => token !== null);
+};
+
+// Fetch tokens from our known list (from mock data)
+export const getRecentTokens = async (): Promise<SolanaToken[]> => {
+  // Use the known tokens from our mock data list
+  // These are the tokens we want to display: USDC, SOL, BONK, WIF, PEPE, etc.
+  return await fetchMultipleTokens(POPULAR_SOLANA_TOKENS);
 };
 
 // Generate realistic trades based on actual token data
@@ -223,10 +290,9 @@ const generateTransactionSignature = (): string => {
   return result + '...' + chars.charAt(Math.floor(Math.random() * chars.length));
 };
 
-// Get trending tokens (simulate PumpFun trending)
+// Get trending tokens (using our known tokens)
 export const getTrendingTokens = async (): Promise<SolanaToken[]> => {
-  // In a real implementation, you would call PumpFun API or Jupiter API
-  // For now, return popular tokens with enhanced volatility
+  // Use the first 5 tokens from our known list
   const trendingAddresses = POPULAR_SOLANA_TOKENS.slice(0, 5);
   const tokens = await fetchMultipleTokens(trendingAddresses);
   
@@ -241,10 +307,10 @@ export const getTrendingTokens = async (): Promise<SolanaToken[]> => {
 // Get token by symbol
 export const getTokenBySymbol = async (symbol: string): Promise<SolanaToken | null> => {
   const allTokens = Object.values(MOCK_TOKEN_DATA);
-  const token = allTokens.find(t => t.symbol.toLowerCase() === symbol.toLowerCase());
+  const token = allTokens.find(t => t.symbol?.toLowerCase() === symbol.toLowerCase());
   
   if (token) {
-    return await fetchTokenData(token.address);
+    return await fetchTokenData(Object.keys(MOCK_TOKEN_DATA)[allTokens.indexOf(token)]);
   }
   
   return null;

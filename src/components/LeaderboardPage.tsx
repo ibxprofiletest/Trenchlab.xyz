@@ -92,7 +92,7 @@ export default function LeaderboardPage() {
                       </span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap border-r-2 border-border">
-                      <span className="text-sm font-bold text-accent-foreground">
+                      <span className="text-sm font-bold text-green">
                         +{model.percentChange.toFixed(2)}%
                       </span>
                     </td>

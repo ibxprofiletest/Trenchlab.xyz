@@ -29,7 +29,7 @@ export default function ModelCards() {
           <span className="text-sm font-bold text-foreground">
             ${highest.currentValue.toLocaleString()}
           </span>
-          <span className="text-sm font-bold text-accent-foreground">
+          <span className="text-sm font-bold text-foreground">
             +{highest.percentChange.toFixed(2)}%
           </span>
         </div>
@@ -45,7 +45,7 @@ export default function ModelCards() {
           <span className="text-sm font-bold text-foreground">
             ${lowest.currentValue.toLocaleString()}
           </span>
-          <span className="text-sm font-bold text-accent-foreground">
+          <span className="text-sm font-bold text-foreground">
             +{lowest.percentChange.toFixed(2)}%
           </span>
         </div>

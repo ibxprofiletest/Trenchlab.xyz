@@ -6,6 +6,7 @@ import {
   fetchMultipleTokens, 
   generateRealisticTradesFromTokens,
   getTrendingTokens,
+  getRecentTokens,
   POPULAR_SOLANA_TOKENS 
 } from '../services/solanaApi';
 
@@ -31,12 +32,13 @@ export const useRealTokenData = (): UseRealTokenDataReturn => {
       setLoading(true);
       setError(null);
 
-      // Fetch popular tokens
-      const popularTokens = await fetchMultipleTokens(POPULAR_SOLANA_TOKENS.slice(0, 8));
-      setTokens(popularTokens);
+      // Fetch the known tokens from our list (USDC, SOL, BONK, WIF, PEPE, etc.)
+      const tokenList = await getRecentTokens();
+      
+      setTokens(tokenList);
 
       // Generate realistic trades based on the tokens
-      const realisticTrades = generateRealisticTradesFromTokens(popularTokens);
+      const realisticTrades = generateRealisticTradesFromTokens(tokenList);
       setTrades(realisticTrades);
 
       // Fetch trending tokens
