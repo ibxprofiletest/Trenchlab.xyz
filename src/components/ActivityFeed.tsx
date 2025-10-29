@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { MOCK_DECISIONS, MOCK_TRADES, MOCK_TOOL_USAGE, MOCK_TWEETS, getMockTrades } from '../data/mockData';
+import { MOCK_DECISIONS, MOCK_TOOL_USAGE, MOCK_TWEETS } from '../data/mockData';
 import { AI_MODELS } from '../types';
 import { useRealTokenData } from '../hooks/useRealTokenData';
 import type { Decision, Trade } from '../types';
@@ -13,36 +13,18 @@ interface ActivityFeedProps {
 export default function ActivityFeed({ onDecisionClick }: ActivityFeedProps) {
   const [activeTab, setActiveTab] = useState<TabType>('reasoning');
   const [selectedAgent, setSelectedAgent] = useState<string>('all');
-  const [realTrades, setRealTrades] = useState<Trade[]>(MOCK_TRADES);
-  const [loadingTrades, setLoadingTrades] = useState(false);
+  const [realTrades, setRealTrades] = useState<Trade[]>([]);
   
   const { trades: liveTrades, loading: liveLoading } = useRealTokenData();
 
-  // Load real trades on component mount
-  useEffect(() => {
-    const loadRealTrades = async () => {
-      setLoadingTrades(true);
-      try {
-        const trades = await getMockTrades();
-        setRealTrades(trades);
-      } catch (error) {
-        console.error('Failed to load real trades:', error);
-        // Keep using MOCK_TRADES as fallback
-      } finally {
-        setLoadingTrades(false);
-      }
-    };
-
-    loadRealTrades();
-  }, []);
 
   // Update trades with live data when available
   useEffect(() => {
     if (liveTrades.length > 0) {
       const convertedTrades: Trade[] = liveTrades.slice(0, 20).map(trade => ({
         id: trade.id,
-        modelId: AI_MODELS[Math.floor(Math.random() * AI_MODELS.length)].id,
-        modelName: AI_MODELS[Math.floor(Math.random() * AI_MODELS.length)].displayName,
+        modelId: 'wallet',
+        modelName: trade.trader ? `${trade.trader.substring(0, 4)}...${trade.trader.substring(trade.trader.length - 4)}` : 'Wallet',
         type: trade.type,
         token: trade.tokenSymbol,
         amount: trade.amount,
@@ -57,9 +39,13 @@ export default function ActivityFeed({ onDecisionClick }: ActivityFeedProps) {
     ? MOCK_DECISIONS
     : MOCK_DECISIONS.filter(d => d.modelId === selectedAgent);
 
-  const filteredTrades = selectedAgent === 'all'
-    ? realTrades
-    : realTrades.filter(t => t.modelId === selectedAgent);
+  // For trades tab, always show all trades (real wallet addresses)
+  // For other tabs, apply agent filter
+  const filteredTrades = activeTab === 'trades' 
+    ? realTrades 
+    : (selectedAgent === 'all'
+        ? realTrades
+        : realTrades.filter(t => t.modelId === selectedAgent));
 
   const truncateText = (text: string, maxLength: number = 300) => {
     if (text.length <= maxLength) return text;
@@ -68,27 +54,29 @@ export default function ActivityFeed({ onDecisionClick }: ActivityFeedProps) {
 
   return (
     <div className="h-full lg:border-l-2 border-border bg-background flex flex-col overflow-hidden">
-      {/* Filter Dropdown */}
-      <div className="flex-shrink-0 border-b-2 border-border bg-background px-3 md:px-4 py-2">
-        <div className="flex items-center gap-2">
-          <span className="text-xs font-bold text-muted-foreground whitespace-nowrap">
-            FILTER:
-          </span>
-          <select
-            value={selectedAgent}
-            onChange={(e) => setSelectedAgent(e.target.value)}
-            className="flex-1 text-xs bg-card text-foreground border-2 border-border px-2 py-1.5 font-bold hover:bg-muted transition-colors cursor-pointer"
-          >
-            <option value="all">All Agents </option>
-            {AI_MODELS.map(model => (
-              <option key={model.id} value={model.id}>
-                {model.displayName} ▼
-              </option>
-            ))}
-            <option value="system">System ▼</option>
-          </select>
+      {/* Filter Dropdown - Hide for trades tab since we're showing real wallet addresses */}
+      {activeTab !== 'trades' && (
+        <div className="flex-shrink-0 border-b-2 border-border bg-background px-3 md:px-4 py-2">
+          <div className="flex items-center gap-2">
+            <span className="text-xs font-bold text-muted-foreground whitespace-nowrap">
+              FILTER:
+            </span>
+            <select
+              value={selectedAgent}
+              onChange={(e) => setSelectedAgent(e.target.value)}
+              className="flex-1 text-xs bg-card text-foreground border-2 border-border px-2 py-1.5 font-bold hover:bg-muted transition-colors cursor-pointer"
+            >
+              <option value="all">All Agents </option>
+              {AI_MODELS.map(model => (
+                <option key={model.id} value={model.id}>
+                  {model.displayName} ▼
+                </option>
+              ))}
+              <option value="system">System ▼</option>
+            </select>
+          </div>
         </div>
-      </div>
+      )}
 
       {/* Tabs */}
       <div className="flex-shrink-0 border-b-2 border-border bg-card">
