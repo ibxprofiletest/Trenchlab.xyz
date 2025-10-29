@@ -7,6 +7,7 @@ import {
   generateRealisticTradesFromTokens,
   getTrendingTokens,
   getRecentTokens,
+  fetchRecentTrades,
   POPULAR_SOLANA_TOKENS 
 } from '../services/solanaApi';
 import { MOCK_TRADES } from '../data/mockData';
@@ -39,9 +40,18 @@ export const useRealTokenData = (): UseRealTokenDataReturn => {
       
       setTokens(tokenList);
 
-      // Generate realistic trades based on the tokens
-      const realisticTrades = generateRealisticTradesFromTokens(tokenList);
-      setTrades(realisticTrades);
+      // Try to fetch real trades from the API
+      const tokenAddresses = tokenList.map(t => t.address);
+      const realTrades = await fetchRecentTrades(tokenAddresses);
+      
+      if (realTrades.length > 0) {
+        // Use real trades from API
+        setTrades(realTrades);
+      } else {
+        // Fallback to generated trades based on token data
+        const realisticTrades = generateRealisticTradesFromTokens(tokenList);
+        setTrades(realisticTrades);
+      }
 
       // Fetch trending tokens
       const trending = await getTrendingTokens();

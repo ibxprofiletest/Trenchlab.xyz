@@ -72,26 +72,31 @@ export const fetchTokenData = async (tokenAddress: string): Promise<SolanaToken 
   try {
     // Try to fetch from Solana Tracker API using the token address directly
     // Using Birdeye API format as Solana Tracker might use similar endpoints
-    const data = await fetchFromSolanaTracker(`/token/price?address=${tokenAddress}`);
+    const data = await fetchFromSolanaTracker(`/price?token=${tokenAddress}`);
+    
+    // Get known token metadata first (symbol, name, etc.)
+    const knownToken = MOCK_TOKEN_DATA[tokenAddress];
     
     if (data && (data.currentPrice || data.price || data.value)) {
       // Map API response to our token format
       const price = data.currentPrice || data.price || data.value || 0;
+      
+      // Merge API data with known token metadata
       return {
         address: tokenAddress,
-        symbol: data.symbol || 'UNKNOWN',
-        name: data.name || data.symbol || 'Unknown Token',
+        symbol: knownToken?.symbol || 'UNKNOWN',
+        name: knownToken?.name || 'Unknown Token',
         price: parseFloat(price) || 0,
-        marketCap: parseFloat(data.marketCap || data.mc) || 0,
+        marketCap: parseFloat(data.marketCap || data.mc || knownToken?.marketCap) || 0,
         volume24h: parseFloat(data.volume || data.volume24h) || 0,
-        priceChange24h: parseFloat(data.priceChangePercent || data.priceChange24h) || 0,
+        priceChange24h: parseFloat(data.priceChangePercent || data.priceChange24h || knownToken?.priceChange24h) || 0,
         liquidity: parseFloat(data.liquidity) || 0,
-        holders: parseInt(data.holders || data.holderCount) || 0,
-        createdAt: data.createdAt || new Date().toISOString(),
-        image: data.image || data.logoURI,
-        website: data.website,
-        twitter: data.twitter,
-        telegram: data.telegram,
+        holders: parseInt(data.holders || data.holderCount || knownToken?.holders) || 0,
+        createdAt: data.createdAt || knownToken?.createdAt || new Date().toISOString(),
+        image: data.image || data.logoURI || knownToken?.image,
+        website: data.website || knownToken?.website,
+        twitter: data.twitter || knownToken?.twitter,
+        telegram: data.telegram || knownToken?.telegram,
       };
     }
 
@@ -218,15 +223,62 @@ export const getRecentTokens = async (): Promise<SolanaToken[]> => {
   return await fetchMultipleTokens(POPULAR_SOLANA_TOKENS);
 };
 
-// Generate realistic trades based on actual token data
+// Fetch recent trades for a specific token from Solana Tracker API
+export const fetchRecentTradesForToken = async (tokenAddress: string): Promise<SolanaTrade[]> => {
+  try {
+    // Try to fetch trades for this token
+    // Using token transaction endpoint if available
+    const data = await fetchFromSolanaTracker(`/token/trades?address=${tokenAddress}`);
+    
+    if (data && Array.isArray(data)) {
+      return data.slice(0, 50).map((item: any) => ({
+        id: item.signature || item.txHash || `trade_${Date.now()}_${Math.random()}`,
+        tokenAddress: tokenAddress,
+        tokenSymbol: item.symbol || 'UNKNOWN',
+        type: item.type || (item.side === 'buy' ? 'BUY' : 'SELL'),
+        amount: parseFloat(item.amount || item.quantity || item.size || 0),
+        price: parseFloat(item.price || 0),
+        timestamp: item.timestamp || item.time || new Date().toISOString(),
+        trader: item.trader || item.owner || 'Unknown',
+        signature: item.signature || item.txHash || ''
+      }));
+    }
+    
+    return [];
+  } catch (error) {
+    console.error('Error fetching recent trades for token:', error);
+    return [];
+  }
+};
+
+// Fetch recent trades from Solana Tracker API for multiple tokens
+export const fetchRecentTrades = async (tokenAddresses: string[]): Promise<SolanaTrade[]> => {
+  try {
+    console.log('Fetching recent trades from Solana Tracker API...');
+    
+    // Fetch trades for all tokens in parallel
+    const promises = tokenAddresses.map(addr => fetchRecentTradesForToken(addr));
+    const results = await Promise.all(promises);
+    
+    // Flatten and sort by timestamp
+    const allTrades = results.flat();
+    return allTrades.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+  } catch (error) {
+    console.error('Error fetching recent trades:', error);
+    return [];
+  }
+};
+
+// Generate realistic trades based on actual token data with current timestamps
 export const generateRealisticTradesFromTokens = (tokens: SolanaToken[]): SolanaTrade[] => {
   const trades: SolanaTrade[] = [];
   const now = Date.now();
   
-  // Generate trades for the last 24 hours
-  for (let i = 0; i < 100; i++) {
+  // Generate trades for the last hour to make them more "recent"
+  for (let i = 0; i < 50; i++) {
     const token = tokens[Math.floor(Math.random() * tokens.length)];
-    const timestamp = new Date(now - (Math.random() * 24 * 60 * 60 * 1000));
+    // Make trades more recent - within the last hour
+    const timestamp = new Date(now - (Math.random() * 60 * 60 * 1000));
     
     // Generate realistic trade amounts based on token price and market cap
     let amount: number;
@@ -255,7 +307,7 @@ export const generateRealisticTradesFromTokens = (tokens: SolanaToken[]): Solana
     const traderAddress = generateSolanaAddress();
     
     trades.push({
-      id: `trade_${i}_${Date.now()}`,
+      id: `trade_${i}_${now}`,
       tokenAddress: token.address,
       tokenSymbol: token.symbol,
       type: Math.random() > 0.5 ? 'BUY' : 'SELL',
@@ -267,6 +319,7 @@ export const generateRealisticTradesFromTokens = (tokens: SolanaToken[]): Solana
     });
   }
   
+  // Sort by most recent first
   return trades.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
 };
 
