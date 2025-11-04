@@ -209,18 +209,20 @@ const getMockTokenData = (tokenAddress: string): SolanaToken | null => {
   } as SolanaToken;
 };
 
-// Fetch multiple tokens at once
+// Fetch multiple tokens at once (with limit to prevent excessive API calls)
 export const fetchMultipleTokens = async (tokenAddresses: string[]): Promise<SolanaToken[]> => {
-  const promises = tokenAddresses.map(address => fetchTokenData(address));
+  // Limit to max 5 tokens to reduce API calls
+  const limitedAddresses = tokenAddresses.slice(0, 5);
+  const promises = limitedAddresses.map(address => fetchTokenData(address));
   const results = await Promise.all(promises);
   return results.filter((token): token is SolanaToken => token !== null);
 };
 
 // Fetch tokens from our known list (from mock data)
 export const getRecentTokens = async (): Promise<SolanaToken[]> => {
-  // Use the known tokens from our mock data list
-  // These are the tokens we want to display: USDC, SOL, BONK, WIF, PEPE, etc.
-  return await fetchMultipleTokens(POPULAR_SOLANA_TOKENS);
+  // Limit to first 5 tokens to reduce API calls
+  const limitedTokens = POPULAR_SOLANA_TOKENS.slice(0, 5);
+  return await fetchMultipleTokens(limitedTokens);
 };
 
 // Fetch recent trades for a specific token from Solana Tracker API
@@ -293,14 +295,14 @@ export const fetchRecentTrades = async (tokenAddresses: string[]): Promise<Solan
   try {
     console.log('Fetching recent trades from Solana Tracker API...');
     
-    // First, try to get top traders and their recent activity
+    // Limit API calls: Only fetch top 1 trader's wallet info
     const topTraders = await fetchTopTraders(1);
     console.log('Top traders fetched:', topTraders);
     
     if (topTraders.length > 0) {
       console.log('Found', topTraders.length, 'top traders');
-      // Get wallet info for top 3 traders
-      const walletPromises = topTraders.slice(0, 3).map((trader, idx) => {
+      // Limit to only 1 wallet to reduce API calls
+      const walletPromises = topTraders.slice(0, 1).map((trader, idx) => {
         const walletAddress = trader.wallet || trader.address || trader.owner || '';
         console.log(`Fetching wallet ${idx + 1}: ${walletAddress}`);
         return fetchWalletInfo(walletAddress);
@@ -318,10 +320,12 @@ export const fetchRecentTrades = async (tokenAddresses: string[]): Promise<Solan
           return;
         }
         
-        console.log(`Processing ${wallet.tokens.length} tokens from wallet ${index}`);
+        // Limit to top 20 tokens per wallet to reduce processing
+        const tokensToProcess = wallet.tokens.slice(0, 20);
+        console.log(`Processing ${tokensToProcess.length} tokens from wallet ${index}`);
         
         // For each token in the wallet, create recent trades based on actual activity
-        wallet.tokens.forEach((tokenData: any) => {
+        tokensToProcess.forEach((tokenData: any) => {
           const token = tokenData.token;
           const pools = tokenData.pools || [];
           
@@ -331,18 +335,23 @@ export const fetchRecentTrades = async (tokenAddresses: string[]): Promise<Solan
           const pool = pools.find((p: any) => p.price?.usd > 0) || pools[0];
           const price = pool.price?.usd || 0;
           
+          if (price === 0) return; // Skip tokens without price
+          
           // Get actual activity counts
           const buyCount = tokenData.buys || 0;
           const sellCount = tokenData.sells || 0;
           const balance = tokenData.balance || 0;
           const value = tokenData.value || 0;
           
+          // Only process tokens with actual activity
+          if (buyCount === 0 && sellCount === 0) return;
+          
           // Calculate amounts based on actual value
           const amount = balance > 0 ? balance / 1000 : (Math.random() * 1000 + 100);
           
-          // Generate buy trades
+          // Limit to max 2 buy trades per token
           if (buyCount > 0) {
-            for (let i = 0; i < Math.min(buyCount, 3); i++) {
+            for (let i = 0; i < Math.min(buyCount, 2); i++) {
               const timeAgo = Math.random() * 60 * 60 * 1000; // Within last hour
               const timestamp = new Date(now - timeAgo);
               
@@ -360,9 +369,9 @@ export const fetchRecentTrades = async (tokenAddresses: string[]): Promise<Solan
             }
           }
           
-          // Generate sell trades
+          // Limit to max 2 sell trades per token
           if (sellCount > 0) {
-            for (let i = 0; i < Math.min(sellCount, 3); i++) {
+            for (let i = 0; i < Math.min(sellCount, 2); i++) {
               const timeAgo = Math.random() * 60 * 60 * 1000; // Within last hour
               const timestamp = new Date(now - timeAgo);
               
@@ -394,8 +403,8 @@ export const fetchRecentTrades = async (tokenAddresses: string[]): Promise<Solan
       console.log('No top traders found');
     }
     
-    // Fallback: Try to fetch trades for each token
-    const promises = tokenAddresses.slice(0, 5).map(addr => fetchRecentTradesForToken(addr));
+    // Fallback: Limit to only 2 tokens to reduce API calls
+    const promises = tokenAddresses.slice(0, 2).map(addr => fetchRecentTradesForToken(addr));
     const results = await Promise.all(promises);
     
     // Flatten and sort by timestamp
